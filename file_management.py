@@ -17,6 +17,9 @@ if not os.path.exists(UPLOAD_FOLDER):
 def index():
     # セッションではなく、アップロードフォルダからファイルを取得
     files = os.listdir(UPLOAD_FOLDER)
+    # sorted_combined_data.csv を除外
+    files = [f for f in files if f != 'sorted_combined_data.csv']
+
     total_records = 0
     all_data = pd.DataFrame()
 
