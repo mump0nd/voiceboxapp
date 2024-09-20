@@ -426,3 +426,32 @@ input[type="text"] {
 .popup button:hover {
     background-color: #3E8E41;
 }
+
+/* sentence-wrapper クラスのスタイル */
+.sentence-wrapper {
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sentence-wrapper .sentence {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-color);
+}
+
+.sentence-wrapper .sentence-title {
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+.sentence-wrapper .keyword {
+    background-color: var(--highlight-gold);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: black;
+}
