@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>キーワード出現回数（店舗別）</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>ワード出現件数（店舗別）</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>前のページで選択したワードごとに、店舗ごとの多い順に並んでいます。各ワードをクリックするとそのワードが含まれたメッセージが店舗ごとに表示されます。
+            </p>
+        </div>
+
+        <!-- 動的にリファラーを使ってリンクを作成 -->
+        <div class="links">
+            <a href="{{ url_for('data_processing.analysis') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">最初のページに戻る</a>
+        </div>
+
+        <div class="total-count">
+            合計出現件数順に並び替え:
+        </div>
+
+        <!-- キーワードリスト部分 -->
+        <div class="keyword-list">
+            {% for keyword, total in total_counts.items() %}
+                {% if store_keyword_counts[keyword] %}
+                    <div class="keyword-item">
+                        <h2><a href="{{ url_for('data_processing.keyword_sentences', keyword=keyword) }}">{{ keyword }}</a></h2>
+                        <p class="total-count">合計: {{ total }} 件</p>
+                        <ul class="store-list">
+                            {% for store, count in store_keyword_counts[keyword].filtered_stores.items() %}
+                                <li>{{ store }}: {{ count }} 件</li>
+                            {% endfor %}
+                        </ul>
+                        {% if store_keyword_counts[keyword].below_3_stores > 0 %}
+                            <p class="below-3-stores">10件未満の店舗数: {{ store_keyword_counts[keyword].below_3_stores }}</p>
+                            <p class="below-3-count">10件未満の合計回数: {{ store_keyword_counts[keyword].below_3_count }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="links">
+            <a href="{{ url_for('data_processing.analysis') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">最初のページに戻る</a>
+        </div>
+    </div>
+</body>
+</html>

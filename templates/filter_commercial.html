@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Flaskのurl_forを使ってCSSファイルを読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fontsの読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <title>コマーシャルメールの除外結果</title>
+</head>
+<body>
+    <div class="container">
+        <h1>コマーシャルメールの除外結果</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>宣伝や営業のメッセージがリストアップされます。若干お客様からのメッセージが含まれますが、ここでは無視しています。
+            </p>
+            <p>問題なければ<button class="inline-btn">年月と店舗別に分割</button>を押してください。
+            </p>
+
+        </div>
+
+        <!-- 上部に「前に戻るリンク」と「年月に分割」ボタンを追加 -->
+        <div class="links">
+            <a href="{{ url_for('index') }}">前のページに戻る</a>
+        </div>
+
+        <p>除外されたコマーシャルメール: <span class="highlight">{{ commercial_count }} 件</span></p>
+
+        <div class="actions">
+            <form action="{{ url_for('data_processing.split_by_month') }}" method="get" style="display: inline;">
+                <button type="submit">年月と店舗別に分割</button>
+            </form>
+        </div>
+
+        <h2>除外されたメールとそのキーワード</h2>
+        <div class="store-sections">
+            {% for email_data in highlighted_emails %}
+                <div class="store-section">
+                    <h3>受付日時: {{ email_data['受付日時'] }}</h3> <!-- 受付日時をタイトルとして表示 -->
+                    <div class="sentence">
+                        {{ email_data['内容'] | safe }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 下部にも「前に戻るリンク」と「年月に分割」ボタンを追加 -->
+        <div class="links">
+            <a href="{{ url_for('index') }}">前のページに戻る</a>
+            <form action="{{ url_for('data_processing.split_by_month') }}" method="get" style="display: inline;">
+                <button type="submit">年月と店舗別に分割</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

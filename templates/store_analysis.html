@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Flaskのurl_forを使ってCSSファイルを読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fontsの読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <title>{{ store_name }} - 店舗別解析結果</title>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ store_name }} の解析結果</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>店舗ごとに頻出ワードを集計し、出現回数順に並んでいます。また、出現回数を元に生成されたワードクラウドが表示されています。ワードクラウドは、出現回数の多い少ないを可視化したものです。
+            </p>
+            <p>各ワードをクリックすると、そのワードが含まれたメッセージが一覧で表示されます。
+            </p>
+
+        </div>
+        
+        <div class="links">
+            <a href="{{ url_for('data_processing.analysis') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        </div>
+
+        <div class="flex-container">
+            <!-- 左側: 頻出単語リスト -->
+            <div class="list">
+                <h2>頻出ワードトップ50</h2>
+                <ul>
+                    {% for word, count in word_counts %}
+                        <li><a href="{{ url_for('data_processing.word_sentences', store_name=store_name, word=word) }}">{{ word }}: {{ count }} 回</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- 右側: ワードクラウドの表示 -->
+            <div class="list">
+                <h2>ワードクラウド</h2>
+                <img src="{{ wordcloud_image_url }}" alt="Word Cloud for {{ store_name }}">
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="{{ url_for('data_processing.analysis') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        </div>
+    </div>
+</body>
+</html>
