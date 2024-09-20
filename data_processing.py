@@ -234,13 +234,13 @@ def filter_commercial_emails(df):
 # コマーシャルメール除外処理のエンドポイント
 @data_processing.route('/filter_commercial', methods=['GET'])
 def filter_commercial():
-    # セッション内のソート済みデータを取得
-    if 'sorted_data' in session:
-        df = pd.DataFrame(session['sorted_data'])  # セッションからデータフレームを復元
-    else:
+    sorted_data_file_path = 'uploads/sorted_data.csv'
+    
+    if not os.path.exists(sorted_data_file_path):
         return "Error: No data to filter", 400
 
-    # コマーシャルメールを除外し、ハイライトされた結果を取得
+    df = pd.read_csv(sorted_data_file_path, encoding='utf-8-sig')
+
     highlighted_emails, non_commercial_emails = filter_commercial_emails(df)
 
     # commercial_emails と non_commercial_emails をファイルに保存
@@ -254,31 +254,29 @@ def filter_commercial():
     # 保存処理
     non_commercial_emails.to_csv(non_commercial_file_path, encoding='utf-8-sig', index=False)
 
-    # セッションに読み込んだレコード数とコマーシャルメールの除外件数を保存
-    session['total_records'] = len(df)
-    session['commercial_count'] = len(highlighted_emails)
+    total_records = len(df)
+    commercial_count = len(highlighted_emails)
 
     # ハイライトされたメールとキーワードをテンプレートに渡す
-    return render_template('filter_commercial.html', commercial_count=len(highlighted_emails), highlighted_emails=highlighted_emails)
+    return render_template('filter_commercial.html', commercial_count=commercial_count, highlighted_emails=highlighted_emails)
 
 # データをソートする処理
 @data_processing.route('/sort_data', methods=['POST'])
 def sort_data():
-    # セッションからデータを取得
-    sorted_data = session.get('sorted_data', [])
+    sorted_data_file_path = 'filtered_emails/sorted_data.csv'
     
-    if not sorted_data:
-        return "No data to sort", 400
-
     # データフレームに変換
-    df = pd.DataFrame(sorted_data)
+    if not os.path.exists(sorted_data_file_path):
+        return "No data to sort", 400
+    
+    df = pd.read_csv(sorted_data_file_path, encoding='utf-8-sig')
 
     # 日付でデータをソート
     df['受付日時'] = pd.to_datetime(df['受付日時'], errors='coerce')
     df_sorted = df.sort_values(by='受付日時', ascending=False)
 
-    # ソートされたデータをセッションに保存
-    session['sorted_data'] = df_sorted.to_dict(orient='records')
+    # ソートされたデータをファイルに保存
+    df_sorted.to_csv(sorted_data_file_path, encoding='utf-8-sig', index=False)
 
     return redirect(url_for('result_display.show_results'))
 
@@ -402,33 +400,29 @@ def analysis():
     # GETリクエストの場合、分析画面をレンダリング
     return render_template('analysis.html', top_words=top_words, stop_words=stop_words, store_counts=store_counts)
 
-@ data_processing.route('/store_keyword_counts', methods=['GET', 'POST'])
+@data_processing.route('/store_keyword_counts', methods=['GET', 'POST'])
 def store_keyword_counts():
+    sorted_data_file_path = 'filtered_emails/sorted_data.csv'
+
     if request.method == 'POST':
-        # POSTリクエストでキーワードが送信された場合
         selected_words = request.form.getlist('selected_words')
-        session['selected_words'] = selected_words  # セッションに保存
 
-        # セッションからデータフレームを取得
-        df = pd.DataFrame(session.get('sorted_data', []))
-
-        if df.empty:
+        if not os.path.exists(sorted_data_file_path):
             return redirect(url_for('data_processing.analysis'))
 
-        # キーワードごとに店舗別の出現回数を集計
+        df = pd.read_csv(sorted_data_file_path, encoding='utf-8-sig')
+
         store_keyword_counts, total_counts = aggregate_keywords_by_store(df, selected_words)
 
-        # セッションに分析結果を保存
-        session['store_keyword_counts'] = store_keyword_counts
-        session['total_counts'] = total_counts
-    else:
-        # GETリクエスト時にセッションから保存されたデータを取得
-        store_keyword_counts = session.get('store_keyword_counts', {})
-        total_counts = session.get('total_counts', {})
-        selected_words = session.get('selected_words', [])
+        # 分析結果をファイルに保存
+        pd.DataFrame(store_keyword_counts).to_csv('filtered_emails/store_keyword_counts.csv', encoding='utf-8-sig', index=False)
+        pd.DataFrame(total_counts).to_csv('filtered_emails/total_counts.csv', encoding='utf-8-sig', index=False)
 
-        if not store_keyword_counts or not total_counts:
-            return redirect(url_for('data_processing.analysis'))
+    else:
+        # ファイルから保存されたデータを取得
+        store_keyword_counts = pd.read_csv('filtered_emails/store_keyword_counts.csv', encoding='utf-8-sig').to_dict()
+        total_counts = pd.read_csv('filtered_emails/total_counts.csv', encoding='utf-8-sig').to_dict()
+        selected_words = request.form.getlist('selected_words', [])
 
     return render_template('store_keyword_counts.html', store_keyword_counts=store_keyword_counts, total_counts=total_counts, selected_words=selected_words)
 

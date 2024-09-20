@@ -15,10 +15,14 @@ if not os.path.exists(UPLOAD_FOLDER):
 # インデックスページ: ファイル一覧と総レコード数の表示
 @file_management.route('/')
 def index():
-    # セッションではなく、アップロードフォルダからファイルを取得
+    # アップロードフォルダからファイルを取得
     files = os.listdir(UPLOAD_FOLDER)
-    # sorted_combined_data.csv を除外
-    files = [f for f in files if f != 'sorted_combined_data.csv']
+    
+    # sorted_combined_data.csv と .DS_Store を除外
+    files = [f for f in files if f != 'sorted_combined_data.csv' and f != '.DS_Store' and f != 'sorted_data.csv']
+
+    # ファイルの作成日時（または変更日時）に基づいて昇順にソート
+    files = sorted(files)
 
     total_records = 0
     all_data = pd.DataFrame()
@@ -33,7 +37,7 @@ def index():
         all_data = pd.concat([all_data, df], ignore_index=True)
 
     total_records = len(all_data)
-    
+
     return render_template('index.html', files=files, total_records=total_records)
 
 # ファイルアップロード処理
@@ -57,7 +61,7 @@ def upload_file():
 
         all_data['受付日時'] = pd.to_datetime(all_data['受付日時'], errors='coerce')
         sorted_data = all_data.sort_values(by='受付日時', ascending=False)
-        sorted_data.to_csv(os.path.join(UPLOAD_FOLDER, 'sorted_combined_data.csv'), encoding='utf-8-sig', index=False)
+        sorted_data.to_csv(os.path.join(UPLOAD_FOLDER, 'sorted_data.csv'), encoding='utf-8-sig', index=False)
         
     return redirect(url_for('file_management.index'))
 
