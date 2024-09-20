@@ -45,5 +45,6 @@ def index():
     total_records = sum(len(pd.read_csv(session['uploaded_files'][filename])) for filename in files)
     return render_template('index.html', files=files, total_records=total_records)
 
+
 if __name__ == '__main__':
     app.run(debug=True)
