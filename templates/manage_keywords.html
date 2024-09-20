@@ -14,9 +14,9 @@
         <h1>ポジティブ・ネガティブキーワードの管理</h1>
 
         <!-- 上部のリンク -->
-        <div class="links">
-            <a href="{{ session.get('last_page', '/') }}">前のページに戻る</a>
-            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        <!-- 他のページに遷移するリンクを削除し、このページを閉じるリンクを追加 -->
+        <div>
+            <button onclick="window.close();">このページを閉じる</button>
         </div>
 
         <h2>ポジティブキーワード</h2>
@@ -82,11 +82,11 @@
                 </div>
             {% endfor %}
         </div>
-
+        <p></p>
         <!-- 下部のリンク -->
-        <div class="links">
-            <a href="{{ session.get('last_page', '/') }}">前のページに戻る</a>
-            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        <!-- 他のページに遷移するリンクを削除し、このページを閉じるリンクを追加 -->
+        <div>
+            <button onclick="window.close();">このページを閉じる</button>
         </div>
     </div>
 </body>

@@ -61,6 +61,7 @@
 </head>
 <body>
     <div class="container">
+        
         <!-- 左カラム: メッセージ一覧 -->
         <div class="left-column">
             <h1>{{ store_name }} の "{{ word }}" が含まれる文章</h1>
@@ -68,6 +69,11 @@
             <div class="links">
                 <a href="{{ url_for('data_processing.store_analysis_page', store_name=store_name) }}">前のページに戻る</a>
                 <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+            </div>
+
+            <!-- キーワード管理ページへのボタンリンク -->
+            <div class="keyword-management-link">
+                <a href="{{ url_for('keyword_management.manage_keywords') }}"  target="_blank" class="button">キーワード管理ページへ</a>
             </div>
 
             <div class="store-sections">

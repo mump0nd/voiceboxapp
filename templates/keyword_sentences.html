@@ -76,6 +76,10 @@
                 <a href="{{ url_for('data_processing.store_keyword_counts') }}">前のページに戻る</a> 
                 <a href="{{ url_for('index') }}">最初のページに戻る</a>
             </div>
+            <!-- キーワード管理ページへのボタンリンク -->
+            <div class="keyword-management-link">
+                <a href="{{ url_for('keyword_management.manage_keywords') }}"  target="_blank" class="button">キーワード管理ページへ</a>
+            </div>
 
             <!-- 店舗ごとにキーワードを含む文章を表示 -->
             <div class="store-sections">
