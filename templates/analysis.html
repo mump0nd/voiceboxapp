@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+    <!-- CSRFトークンの設定 -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>解析ページ</title>
+</head>
+<body>
+    <div class="container">
+        <h1>解析結果 - 頻出ワード選択</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>左列には<strong>上位50件の頻出ワード</strong>が並んでいます。ワードを選択して分析を進めます。</p>
+        </div>
+
+        <!-- 注意事項 -->
+        <div class="notice">
+            <h3>注意事項</h3>
+            <p>ワードを選択せずに進むことはできません。ワードを選択してください。</p>
+        </div>
+
+        <form action="/analysis" method="POST">
+            <!-- CSRFトークンをフォームに含める -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- 上部のリンク -->
+            <div class="links">
+                <a href="{{ url_for('data_processing.split_by_month') }}">前のページに戻る</a>
+                <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+            </div>
+
+            <!-- 対象レコード数の表示 -->
+            <p>対象レコード数: {{ target_records }} 件</p>
+
+            <!-- キーワード管理ページへのボタンリンク -->
+            <div class="keyword-management-link">
+                <a href="{{ url_for('keyword_management.manage_keywords') }}" class="button">キーワード管理ページへ</a>
+            </div>
+
+            <div class="analysis-grid">
+                <!-- 左カラム: 上位50件の頻出ワード -->
+                <div class="list">
+                    <h2>上位 50 件の頻出ワード</h2>
+                    <form action="{{ url_for('data_processing.store_keyword_counts') }}" method="POST">
+                        <!-- CSRFトークンをフォームに含める -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="actions">
+                            <button type="submit">ワード出現件数を分析</button>
+                            <button type="button" onclick="selectAll()">全選択</button>
+                            <button type="button" onclick="deselectAll()">全解除</button>
+                        </div>
+                        
+                        <ul>
+                            {% for word, count in top_words %}
+                                <li>
+                                    <input type="checkbox" name="selected_words" value="{{ word }}">
+                                    {{ word }}: {{ count }} 件
+                                    <button type="submit" name="add_stop_word" value="{{ word }}">ストップワードに追加</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="actions">
+                            <button type="submit">ワード出現件数を分析</button>
+                            <button type="button" onclick="selectAll()">全選択</button>
+                            <button type="button" onclick="deselectAll()">全解除</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 右カラム: 店舗ごとの分析 -->
+                <div class="list">
+                    <h2>店舗ごとの分析へ</h2>
+                    <div class="comment">
+                        寄せられた意見の多い順に表示
+                    </div>
+                        
+                    <div class="store-grid">
+                        {% for store, count in store_counts.items() %}
+                            <div class="store-grid-item">
+                                <a class="" href="{{ url_for('data_processing.store_analysis_page', store_name=store) }}">{{ store }}: {{ count }} 件</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下部のリンク -->
+            <div class="links">
+                <a href="{{ url_for('data_processing.split_by_month') }}">前のページに戻る</a>
+                <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+        }
+
+        function deselectAll() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+    </script>
+</body>
+</html>

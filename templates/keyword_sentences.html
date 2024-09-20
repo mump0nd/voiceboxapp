@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+    <!-- CSRFトークンをmetaタグで設定 -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>ワード "{{ keyword }}" が含まれる文章</title>
+    <style>
+        /* 右カラムをスクロールしても固定する */
+        .right-column {
+            position: fixed;
+            top: 200px;
+            right: 20px;
+            width: 150px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .store-sections {
+            width: 75%;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 75%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        .form-group button {
+            width: 60%;
+            padding: 8px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #45a049;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-column">
+            <h1>ワード "{{ keyword }}" が含まれる文章</h1>
+
+            <!-- 説明書きスペース -->
+            <div class="description">
+                <h3>説明</h3>
+                <p>前のページでクリックしたワードが含まれたメッセージが、出現回数の多い店舗順に並んでいます。</p>
+                <p>特定の店舗だけを見たい場合は、<a href="">解析結果</a>のページから、店舗ごとの分析で見たい店舗をクリックしてください。</p>
+            </div>
+
+            <div class="links">
+                <a href="{{ url_for('data_processing.store_keyword_counts') }}">前のページに戻る</a> 
+                <a href="{{ url_for('index') }}">最初のページに戻る</a>
+            </div>
+
+            <!-- 店舗ごとにキーワードを含む文章を表示 -->
+            <div class="store-sections">
+                {% for store, sentences in sentences_by_store.items() %}
+                    <div class="store-section">
+                        <h2>店舗: {{ store }}</h2>
+                        {% for sentence_info in sentences %}
+                            <!-- 各文章を個別に表示するためにdivで囲む -->
+                            <div class="sentence-wrapper">
+                                <div class="sentence">
+                                    <div class="sentence-title">
+                                        性別: {{ sentence_info['性別'] }}, 受付日時: {{ sentence_info['受付日時'] }}
+                                    </div>
+                                    <!-- キーワードを強調表示 -->
+                                    {{ sentence_info['内容'] | replace(keyword, '<span class="keyword">' ~ keyword ~ '</span>') | safe }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- 下部にも「前のページに戻る」リンクを追加 -->
+            <div class="links">
+                <a href="{{ url_for('data_processing.store_keyword_counts') }}">前のページに戻る</a> 
+                <a href="{{ url_for('index') }}">最初のページに戻る</a>
+            </div>
+        </div>
+
+        <!-- 右カラムにポジティブ、ネガティブ、ストップワードのフォームを追加 -->
+        <div class="right-column">
+            <h3>キーワードを追加</h3>
+
+            <form id="positive-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRFトークン -->
+                <div class="form-group">
+                    <label for="positive_word">ポジティブワード:</label>
+                    <input type="text" id="positive_word" name="word" placeholder="ここに入力">
+                    <input type="hidden" name="keyword_type" value="positive">
+                    <button type="submit">追加</button>
+                </div>
+            </form>
+
+            <form id="negative-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRFトークン -->
+                <div class="form-group">
+                    <label for="negative_word">ネガティブワード:</label>
+                    <input type="text" id="negative_word" name="word" placeholder="ここに入力">
+                    <input type="hidden" name="keyword_type" value="negative">
+                    <button type="submit">追加</button>
+                </div>
+            </form>
+
+            <form id="stop-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRFトークン -->
+                <div class="form-group">
+                    <label for="stop_word">ストップワード:</label>
+                    <input type="text" id="stop_word" name="stop_word" placeholder="ここに入力">
+                    <button type="submit">追加</button>
+                </div>
+            </form>
+
+            <div class="response-message" id="response-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // ポジティブワード追加
+        document.getElementById('positive-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 画面遷移を防ぐ
+            var formData = new FormData(this);
+            fetch('{{ url_for("keyword_management.add_keyword_route") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('response-message').textContent = data.message;
+            });
+        });
+
+        // ネガティブワード追加
+        document.getElementById('negative-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 画面遷移を防ぐ
+            var formData = new FormData(this);
+            fetch('{{ url_for("keyword_management.add_keyword_route") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('response-message').textContent = data.message;
+            });
+        });
+
+        // ストップワード追加
+        document.getElementById('stop-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 画面遷移を防ぐ
+            var formData = new FormData(this);
+            fetch('{{ url_for("keyword_management.add_stop_word") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('response-message').textContent = data.message;
+            });
+        });
+    </script>
+</body>
+</html>

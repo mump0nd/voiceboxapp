@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Flaskのurl_forを使ってCSSファイルを読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fontsの読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <title>ファイルアップロード</title>
+</head>
+<body>
+
+    <div class="container">
+        <h1>ファイルアップロード</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>このページでは、お客様の声に関するデータを解析する準備を行います。<button class="inline-btn">コマーシャルを除外</button>を押すと宣伝や営業のメッセージを除外する処理が行われます。</p>
+        </div>
+
+        <!-- アップロードフォームは常に表示 -->
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="file-upload">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRFトークンを追加 -->
+                <input type="file" name="file" multiple>
+                <button type="submit">アップロード</button>
+            </div>
+        </form>
+        
+
+        <!-- アップロードされたファイルが存在する場合 -->
+        {% if files %}
+            <h2>アップロードされたファイル</h2>
+
+            <div class="notice">
+                <h3>注意事項</h3>
+                <p>管理者以外はファイルのアップロードや削除を行わないでください。</p>
+            </div>
+
+            <ul class="file-list">
+                {% for filename in files %}
+                    <li>
+                        {{ filename }}
+                        <form action="/remove_file" method="post" style="display:inline;">
+                            <input type="hidden" name="filename" value="{{ filename }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRFトークンを追加 -->
+                            <button type="submit">削除</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+            
+            <!-- 総レコード数の表示 -->
+            <h3>読み込まれた総レコード数: {{ total_records }} 件</h3>
+        {% endif %}
+
+        <!-- コマーシャルメール除外処理への移動 -->
+        <div class="actions">
+            <form action="{{ url_for('data_processing.filter_commercial') }}" method="get">
+                <button type="submit">コマーシャルを除外</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

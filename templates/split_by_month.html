@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Flaskのurl_forを使ってCSSファイルを読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fontsの読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+    <title>年月ごとのファイルと店舗ごとのファイル</title>
+</head>
+<body>
+    <div class="container">
+        <h1>ファイルを年月ごとおよび店舗ごとに分割</h1>
+
+        <!-- 説明書きスペース -->
+        <div class="description">
+            <h3>説明</h3>
+            <p>年月ごとと店舗ごとにそれぞれ集計されています。<button class="inline-btn">解析に進む</button>を押してください。
+
+            </p>
+        </div>
+
+        <!-- 上部に「前に戻る」と「先頭に戻る」リンクを追加 -->
+        <div class="links">
+            <a href="{{ url_for('data_processing.filter_commercial') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        </div>
+
+        <p>読み込んだ総レコード数: {{ total_records }} 件</p>
+        <p>コマーシャルメールの除外数: {{ commercial_count }} 件</p>
+        <p>対象レコード数: {{ target_records }} 件</p>
+
+        <div class="flex-container">
+            <!-- 左側：年月ごとの件数 -->
+            <div class="flex-item">
+                <h2>年月ごとの件数</h2>
+               
+                <!-- analysisページへ対象レコード数を渡す -->
+                <form action="/analysis" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- フォームの他の要素 -->
+                    <button type="submit">解析に進む</button>
+                </form>
+                
+                <ul>
+                    {% for year_month, count in year_month_counts.items() %}
+                        <li>{{ year_month }}: {{ count }} 件</li>
+                    {% endfor %}
+                </ul>
+
+                <!-- analysisページへ対象レコード数を渡す -->
+                <form action="/analysis" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <!-- フォームの他の要素 -->
+                    <button type="submit">解析に進む</button>
+                </form>
+            </div>
+
+            <!-- 右側：店舗ごとの件数 -->
+            <div class="flex-item">
+                <h2>店舗ごとの件数</h2>
+                <ul>
+                    {% for store, count in store_counts.items() %}
+                        <li>{{ store }}: {{ count }} 件</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- 下部に「前に戻る」と「先頭に戻る」リンクを追加 -->
+        <div class="links">
+            <a href="{{ url_for('data_processing.filter_commercial') }}">前のページに戻る</a>
+            <a href="{{ url_for('index') }}">先頭のページに戻る</a>
+        </div>
+    </div>
+</body>
+</html>
