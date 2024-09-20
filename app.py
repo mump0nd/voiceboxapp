@@ -5,9 +5,28 @@ from flask_wtf.csrf import CSRFProtect
 from file_management import file_management
 from data_processing import data_processing
 from keyword_management import keyword_management  # keyword_management の依存関係を追加
-
+import logging
+from logging.handlers import RotatingFileHandler
+from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
+
+# デバッグモードを有効にし、詳細なログを出力
+app.debug = True
+app.logger.setLevel(logging.DEBUG)
+
+# ログレベルをDEBUGに設定
+logging.basicConfig(level=logging.DEBUG)
+
+# Werkzeugのリクエストログを有効化
+WSGIRequestHandler.log_request = lambda self, *args, **kwargs: logging.info(self.requestline)
+
+# ログファイルの設定
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
+handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
+
+
 
 # Flask-Sessionの設定
 app.config['SESSION_TYPE'] = 'filesystem'

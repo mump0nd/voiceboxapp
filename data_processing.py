@@ -17,6 +17,13 @@ data_processing = Blueprint('data_processing', __name__)
 tokenizer_obj = dictionary.Dictionary().create()
 mode = tokenizer.Tokenizer.SplitMode.C
 
+# ファイル保存フォルダの定義
+UPLOAD_FOLDER = 'uploads'
+FILTERED_FOLDER = 'filtered_emails'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(FILTERED_FOLDER, exist_ok=True)
+
+
 # 頻出ワード解析処理
 def analyze_frequent_words(df, top_n=50):
     # 頻出ワードを集計する処理
@@ -104,13 +111,17 @@ def aggregate_keywords_by_store(df, keywords):
     total_counts = {}
     stop_words = load_stop_words()
 
+
     for keyword in keywords:
         # キーワードが1回以上含まれるかを確認する（1回以上あれば1カウントとする）
         store_counts = df[df['内容'].str.contains(keyword, na=False)].groupby('子要素').size().sort_values(ascending=False)
+
         total_counts[keyword] = store_counts.sum()
+
 
         # 3回以上の店舗を抽出
         filtered_store_counts = store_counts[store_counts >= 10]
+
 
         # 3回未満の店舗の合計回数と店舗数
         below_3_count = store_counts[store_counts < 10].sum()
@@ -121,6 +132,7 @@ def aggregate_keywords_by_store(df, keywords):
             'below_3_count': below_3_count,
             'below_3_stores': below_3_stores
         }
+
 
     # キーワードを合計出現回数順にソート
     sorted_keywords = sorted(total_counts.items(), key=lambda x: x[1], reverse=True)
@@ -402,28 +414,71 @@ def analysis():
 
 @data_processing.route('/store_keyword_counts', methods=['GET', 'POST'])
 def store_keyword_counts():
-    sorted_data_file_path = 'filtered_emails/sorted_data.csv'
+    print("Entered store_keyword_counts function")  # ログ追加
+
+    sorted_data_file_path = 'uploads/sorted_data.csv'
+    output_folder = 'filtered_emails'
 
     if request.method == 'POST':
         selected_words = request.form.getlist('selected_words')
+        print(f"Selected words: {selected_words}")  # ログ追加
 
         if not os.path.exists(sorted_data_file_path):
+            print(f"File not found: {sorted_data_file_path}")  # ログ追加
             return redirect(url_for('data_processing.analysis'))
 
-        df = pd.read_csv(sorted_data_file_path, encoding='utf-8-sig')
+        try:
+            df = pd.read_csv(sorted_data_file_path, encoding='utf-8-sig')
+            print(f"Data loaded from {sorted_data_file_path}")  # ログ追加
 
-        store_keyword_counts, total_counts = aggregate_keywords_by_store(df, selected_words)
+            # キーワードごとの出現回数を集計
+            store_keyword_counts, total_counts = aggregate_keywords_by_store(df, selected_words)
+            print(f"Store keyword counts: {store_keyword_counts}")  # ログ追加
 
-        # 分析結果をファイルに保存
-        pd.DataFrame(store_keyword_counts).to_csv('filtered_emails/store_keyword_counts.csv', encoding='utf-8-sig', index=False)
-        pd.DataFrame(total_counts).to_csv('filtered_emails/total_counts.csv', encoding='utf-8-sig', index=False)
+            # DataFrameに変換
+            store_keyword_counts_df = pd.DataFrame.from_dict(store_keyword_counts, orient='index').reset_index()
+            total_counts_df = pd.DataFrame(list(total_counts.items()), columns=['keyword', 'count'])
+
+            # 保存ディレクトリの存在を確認
+            if not os.path.exists(output_folder):
+                print(f"Creating directory: {output_folder}")  # ログ追加
+                os.makedirs(output_folder)
+
+            # ファイルパス確認
+            store_keyword_counts_file = os.path.join(output_folder, 'store_keyword_counts.csv')
+            total_counts_file = os.path.join(output_folder, 'total_counts.csv')
+
+            print(f"Saving files to: {store_keyword_counts_file}, {total_counts_file}")  # ログ追加
+
+            # ファイル保存処理
+            store_keyword_counts_df.to_csv(store_keyword_counts_file, encoding='utf-8-sig', index=False)
+            total_counts_df.to_csv(total_counts_file, encoding='utf-8-sig', index=False)
+            print("Files saved successfully")  # ログ追加
+
+        except Exception as e:
+            print(f"Failed to save files: {e}")  # エラー時のログ追加
+            return f"Error processing data: {e}", 500
 
     else:
-        # ファイルから保存されたデータを取得
-        store_keyword_counts = pd.read_csv('filtered_emails/store_keyword_counts.csv', encoding='utf-8-sig').to_dict()
-        total_counts = pd.read_csv('filtered_emails/total_counts.csv', encoding='utf-8-sig').to_dict()
-        selected_words = request.form.getlist('selected_words', [])
+        print("GET request received")  # ログ追加
+        try:
+            # 既存ファイルを確認して読み込み
+            store_keyword_counts_file = os.path.join(output_folder, 'store_keyword_counts.csv')
+            total_counts_file = os.path.join(output_folder, 'total_counts.csv')
 
+            if os.path.exists(store_keyword_counts_file) and os.path.exists(total_counts_file):
+                print("Loading existing keyword count files")  # ログ追加
+                store_keyword_counts = pd.read_csv(store_keyword_counts_file, encoding='utf-8-sig').to_dict()
+                total_counts = pd.read_csv(total_counts_file, encoding='utf-8-sig').to_dict()
+            else:
+                print("Required CSV files not found!")  # ログ追加
+                return redirect(url_for('data_processing.analysis'))
+
+        except Exception as e:
+            print(f"Error loading files: {e}")  # エラー時のログ追加
+            return f"Error loading data: {e}", 500
+
+    # テンプレートにデータを渡す
     return render_template('store_keyword_counts.html', store_keyword_counts=store_keyword_counts, total_counts=total_counts, selected_words=selected_words)
 
 @data_processing.route('/keyword_sentences/<keyword>')
