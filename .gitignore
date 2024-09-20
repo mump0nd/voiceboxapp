@@ -14,3 +14,16 @@ __pycache__/
 
 # 機密情報
 .env
+
+# flask_session フォルダ全体を除外
+flask_session/
+
+# filtered_emails フォルダ全体を除外
+filtered_emails/
+
+# static/wordclouds フォルダ全体を除外
+static/wordclouds/
+
+# 個別除外ファイル
+directoryTree.txt
+backup.py
